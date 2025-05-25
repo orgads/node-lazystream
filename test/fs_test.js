@@ -1,21 +1,28 @@
+const { test, describe } = require('node:test');
+const assert = require('node:assert/strict');
 const stream = require('../lib/lazystream');
 const fs = require('fs');
+const fsp = fs.promises;
 const tmpDir = 'test/tmp/';
 const readFile = 'test/data.md';
 const writeFile = tmpDir + 'data.md';
 
-exports.fs = {
-  readwrite: function(test) {
+describe('fs', () => {
+  test('readwrite', async () => {
     let readfd, writefd;
+
+    // Clean up and prepare directories
+    await fsp.mkdir(tmpDir, { recursive: true });
+    try {
+      await fsp.unlink(writeFile);
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+    }
 
     const readable = new stream.Readable(function() {
        return fs.createReadStream(readFile)
         .on('open', function(fd) {
           readfd = fd;
-        })
-        .on('close', function() {
-           readfd = undefined;
-           step();
         });
     });
 
@@ -23,46 +30,29 @@ exports.fs = {
       return fs.createWriteStream(writeFile)
         .on('open', function(fd) {
           writefd = fd;
-        })
-        .on('close', function() {
-          writefd = undefined;
-           step();
         });
     });
 
-    test.expect(3);
+    assert.equal(readfd, undefined, 'Input file should not be opened until read');
+    assert.equal(writefd, undefined, 'Output file should not be opened until write');
 
-    test.equal(readfd, undefined, 'Input file should not be opened until read');
-    test.equal(writefd, undefined, 'Output file should not be opened until write');
+    // Pipe files and wait for completion
+    await new Promise((resolve, reject) => {
+      readable.pipe(writable);
+      writable.on('finish', async () => {
+        try {
+          const input = await fsp.readFile(readFile);
+          const output = await fsp.readFile(writeFile);
 
-    if (!fs.existsSync(tmpDir)) {
-      fs.mkdirSync(tmpDir);
-    }
-    if (fs.existsSync(writeFile)) {
-      fs.unlinkSync(writeFile);
-    }
-
-    readable.on('end', function() { step(); });
-    writable.on('end', function() { step(); });
-
-    let steps = 0;
-    function step() {
-      steps += 1;
-      if (steps == 4) {
-        const input = fs.readFileSync(readFile);
-        const output = fs.readFileSync(writeFile);
-
-        test.ok(input >= output && input <= output, 'Should be equal');
-
-        fs.unlinkSync(writeFile);
-        fs.rmdirSync(tmpDir);
-
-        test.done();
-      }
-    };
-
-    readable.pipe(writable);
-  }
-};
+          assert.ok(Buffer.isBuffer(input) && Buffer.isBuffer(output), 'Both should be buffers');
+          assert.deepEqual(input, output, 'Files should be equal');
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+  });
+});
 
 

@@ -1,71 +1,70 @@
+const { test, describe } = require('node:test');
+const assert = require('node:assert/strict');
 const { Readable } = require('../lib/lazystream');
 const { DummyReadable } = require('./helper');
 
-exports.readable = {
-  dummy: function(test) {
+describe('readable', () => {
+  test('dummy', async () => {
     const expected = [ 'line1\n', 'line2\n' ];
     const actual = [];
 
-    test.expect(1);
+    return new Promise((resolve) => {
+      new DummyReadable([].concat(expected))
+        .on('data', function(chunk) {
+          actual.push(chunk.toString());
+        })
+        .on('end', function() {
+          assert.equal(actual.join(''), expected.join(''), 'DummyReadable should produce the data it was created with');
+          resolve();
+        });
+    });
+  });
 
-    new DummyReadable([].concat(expected))
-      .on('data', function(chunk) {
-        actual.push(chunk.toString());
-      })
-      .on('end', function() {
-        test.equal(actual.join(''), expected.join(''), 'DummyReadable should produce the data it was created with');
-        test.done();
-      });
-  },
-  options: function(test) {
-    test.expect(3);
-
+  test('options', () => {
     const readable = new Readable(function(options) {
-       test.ok(this instanceof Readable, "Readable should bind itself to callback's this");
-       test.equal(options.encoding, "utf-8", "Readable should make options accessible to callback");
+       assert.ok(this instanceof Readable, "Readable should bind itself to callback's this");
+       assert.equal(options.encoding, "utf-8", "Readable should make options accessible to callback");
        this.ok = true;
        return new DummyReadable(["test"]);
     }, {encoding: "utf-8"});
 
     readable.read(4);
 
-    test.ok(readable.ok);
+    assert.ok(readable.ok);
+  });
 
-    test.done();
-  },
-  streams2: function(test) {
+  test('streams2', async () => {
     const expected = [ 'line1\n', 'line2\n' ];
     const actual = [];
     let instantiated = false;
-
-    test.expect(2);
 
     const readable = new Readable(function() {
       instantiated = true;
       return new DummyReadable([].concat(expected));
     });
 
-    test.equal(instantiated, false, 'DummyReadable should only be instantiated when it is needed');
+    assert.equal(instantiated, false, 'DummyReadable should only be instantiated when it is needed');
 
-    readable.on('readable', function() {
-      let chunk;
-      while ((chunk = readable.read())) {
-        actual.push(chunk.toString());
-      }
-    });
-    readable.on('end', function() {
-      test.equal(actual.join(''), expected.join(''), 'Readable should not change the data of the underlying stream');
-      test.done();
-    });
+    return new Promise((resolve) => {
+      readable.on('readable', function() {
+        let chunk;
+        while ((chunk = readable.read())) {
+          actual.push(chunk.toString());
+        }
+      });
+      readable.on('end', function() {
+        assert.equal(actual.join(''), expected.join(''), 'Readable should not change the data of the underlying stream');
+        resolve();
+      });
 
-    readable.read(0);
-  },
-  resume: function(test) {
+      readable.read(0);
+    });
+  });
+
+  test('resume', async () => {
     const expected = [ 'line1\n', 'line2\n' ];
     let actual = [];
     let instantiated = false;
-
-    test.expect(2);
 
     const readable = new Readable(function() {
       instantiated = true;
@@ -74,16 +73,18 @@ exports.readable = {
 
     readable.pause();
 
-    readable.on('data', function(chunk) {
-      actual.push(chunk.toString());
-    });
-    readable.on('end', function() {
-      test.equal(actual.join(''), expected.join(''), 'Readable should not change the data of the underlying stream');
-      test.done();
-    });
+    assert.equal(instantiated, false, 'DummyReadable should only be instantiated when it is needed');
 
-    test.equal(instantiated, false, 'DummyReadable should only be instantiated when it is needed');
+    return new Promise((resolve) => {
+      readable.on('data', function(chunk) {
+        actual.push(chunk.toString());
+      });
+      readable.on('end', function() {
+        assert.equal(actual.join(''), expected.join(''), 'Readable should not change the data of the underlying stream');
+        resolve();
+      });
 
-    readable.resume();
-  }
-};
+      readable.resume();
+    });
+  });
+});

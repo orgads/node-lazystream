@@ -9,7 +9,7 @@ class DummyReadable extends Readable {
 
   _read(n) {
     if (this.strings.length) {
-      this.push(new Buffer(this.strings.shift()));
+      this.push(Buffer.from(this.strings.shift()));
     } else {
       this.push(null);
     }
@@ -33,4 +33,3 @@ module.exports = {
   DummyReadable,
   DummyWritable
 };
-
