@@ -1,12 +1,11 @@
-
-var Writable = require('../lib/lazystream').Writable;
-var DummyWritable = require('./helper').DummyWritable;
+const { Writable } = require('../lib/lazystream');
+const { DummyWritable } = require('./helper');
 
 exports.writable = {
   options: function(test) {
     test.expect(3);
 
-    var writable = new Writable(function(options) {
+    const writable = new Writable(function(options) {
        test.ok(this instanceof Writable, "Writable should bind itself to callback's this");
        test.equal(options.encoding, "utf-8", "Writable should make options accessible to callback");
        this.ok = true;
@@ -20,26 +19,25 @@ exports.writable = {
     test.done();
   },
   dummy: function(test) {
-    var expected = [ 'line1\n', 'line2\n' ];
-    var actual = [];
-    
+    const expected = [ 'line1\n', 'line2\n' ];
+    const actual = [];
     test.expect(0);
 
-    var dummy = new DummyWritable(actual);
+    const dummy = new DummyWritable(actual);
 
     expected.forEach(function(item) {
-      dummy.write(new Buffer(item));
+      dummy.write(Buffer.from(item));
     });
     test.done();
   },
   streams2: function(test) {
-    var expected = [ 'line1\n', 'line2\n' ];
-    var actual = [];
-    var instantiated = false;
+    const expected = [ 'line1\n', 'line2\n' ];
+    const actual = [];
+    let instantiated = false;
 
     test.expect(2);
 
-    var writable = new Writable(function() {
+    const writable = new Writable(function() {
       instantiated = true;
       return new DummyWritable(actual);
     });
@@ -50,9 +48,8 @@ exports.writable = {
       test.equal(actual.join(''), expected.join(''), 'Writable should not change the data of the underlying stream');
       test.done();
     });
-
     expected.forEach(function(item) {
-      writable.write(new Buffer(item));
+      writable.write(Buffer.from(item));
     });
     writable.end();
   }

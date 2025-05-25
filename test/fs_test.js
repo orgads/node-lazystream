@@ -1,15 +1,14 @@
-
-var stream = require('../lib/lazystream');
-var fs = require('fs');
-var tmpDir = 'test/tmp/';
-var readFile = 'test/data.md';
-var writeFile = tmpDir + 'data.md';
+const stream = require('../lib/lazystream');
+const fs = require('fs');
+const tmpDir = 'test/tmp/';
+const readFile = 'test/data.md';
+const writeFile = tmpDir + 'data.md';
 
 exports.fs = {
   readwrite: function(test) {
-    var readfd, writefd;
+    let readfd, writefd;
 
-    var readable = new stream.Readable(function() {
+    const readable = new stream.Readable(function() {
        return fs.createReadStream(readFile)
         .on('open', function(fd) {
           readfd = fd;
@@ -20,7 +19,7 @@ exports.fs = {
         });
     });
 
-    var writable = new stream.Writable(function() {
+    const writable = new stream.Writable(function() {
       return fs.createWriteStream(writeFile)
         .on('open', function(fd) {
           writefd = fd;
@@ -46,12 +45,12 @@ exports.fs = {
     readable.on('end', function() { step(); });
     writable.on('end', function() { step(); });
 
-    var steps = 0;
+    let steps = 0;
     function step() {
       steps += 1;
       if (steps == 4) {
-        var input = fs.readFileSync(readFile);
-        var output = fs.readFileSync(writeFile);
+        const input = fs.readFileSync(readFile);
+        const output = fs.readFileSync(writeFile);
 
         test.ok(input >= output && input <= output, 'Should be equal');
 

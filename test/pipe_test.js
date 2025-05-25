@@ -1,22 +1,21 @@
-
-var stream = require('../lib/lazystream');
-var helper = require('./helper');
+const stream = require('../lib/lazystream');
+const helper = require('./helper');
 
 exports.pipe = {
   readwrite: function(test) {
-    var expected = [ 'line1\n', 'line2\n' ];
-    var actual = [];
-    var readableInstantiated = false;
-    var writableInstantiated = false;
+    const expected = [ 'line1\n', 'line2\n' ];
+    const actual = [];
+    let readableInstantiated = false;
+    let writableInstantiated = false;
 
     test.expect(3);
 
-    var readable = new stream.Readable(function() {
+    const readable = new stream.Readable(function() {
       readableInstantiated = true;
       return new helper.DummyReadable([].concat(expected));
     });
 
-    var writable = new stream.Writable(function() {
+    const writable = new stream.Writable(function() {
       writableInstantiated = true;
       return new helper.DummyWritable(actual);
     });

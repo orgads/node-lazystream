@@ -1,11 +1,10 @@
-
-var Readable = require('../lib/lazystream').Readable;
-var DummyReadable = require('./helper').DummyReadable;
+const { Readable } = require('../lib/lazystream');
+const { DummyReadable } = require('./helper');
 
 exports.readable = {
   dummy: function(test) {
-    var expected = [ 'line1\n', 'line2\n' ];
-    var actual = [];
+    const expected = [ 'line1\n', 'line2\n' ];
+    const actual = [];
 
     test.expect(1);
 
@@ -21,7 +20,7 @@ exports.readable = {
   options: function(test) {
     test.expect(3);
 
-    var readable = new Readable(function(options) {
+    const readable = new Readable(function(options) {
        test.ok(this instanceof Readable, "Readable should bind itself to callback's this");
        test.equal(options.encoding, "utf-8", "Readable should make options accessible to callback");
        this.ok = true;
@@ -35,13 +34,13 @@ exports.readable = {
     test.done();
   },
   streams2: function(test) {
-    var expected = [ 'line1\n', 'line2\n' ];
-    var actual = [];
-    var instantiated = false;
+    const expected = [ 'line1\n', 'line2\n' ];
+    const actual = [];
+    let instantiated = false;
 
     test.expect(2);
 
-    var readable = new Readable(function() {
+    const readable = new Readable(function() {
       instantiated = true;
       return new DummyReadable([].concat(expected));
     });
@@ -49,7 +48,7 @@ exports.readable = {
     test.equal(instantiated, false, 'DummyReadable should only be instantiated when it is needed');
 
     readable.on('readable', function() {
-      var chunk;
+      let chunk;
       while ((chunk = readable.read())) {
         actual.push(chunk.toString());
       }
@@ -62,13 +61,13 @@ exports.readable = {
     readable.read(0);
   },
   resume: function(test) {
-    var expected = [ 'line1\n', 'line2\n' ];
-    var actual = [];
-    var instantiated = false;
+    const expected = [ 'line1\n', 'line2\n' ];
+    let actual = [];
+    let instantiated = false;
 
     test.expect(2);
 
-    var readable = new Readable(function() {
+    const readable = new Readable(function() {
       instantiated = true;
       return new DummyReadable([].concat(expected));
     });
