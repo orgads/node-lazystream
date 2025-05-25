@@ -31,9 +31,6 @@
     "test/*.js",
     "test/*.md"
   ],
-  "dependencies": {
-    "readable-stream": "^4.7.0"
-  },
   "keywords": [
     "emfile",
     "lazy",
